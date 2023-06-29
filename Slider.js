@@ -50,8 +50,8 @@ class Slider {
     );
 
     // Auto play
-    this.container.addEventListener("mouseleave", this.autoPlay);
-    this.autoPlay();
+    //! this.container.addEventListener("mouseleave", this.autoPlay);
+    // this.autoPlay();
 
     this.dots;
     this.currentSlide = 0;
@@ -64,7 +64,7 @@ class Slider {
    */
   init() {
     // Step 1: Slide Initialization and Pagination Dots Creation
-    // *** Note pagination dot creation is the only feature that dose not work correctly ***///
+    //! *** Note pagination dot creation is the only feature that dose not work correctly ***///
 
     // - Query all slide elements within the container using the class selector ".slide".
     let slideList = this.container.querySelectorAll(".slide");
@@ -128,17 +128,17 @@ class Slider {
           // - Add the "active" class to the pagination dot corresponding to the updated currentSlide index.
           this.container
             .querySelectorAll(".dots .dot")
-            [this.currentSlide].classList.add("active");
+            [this.currentSlide]?.classList.add("active");
       });
     });
 
-    // Step 5: Prepare for Infinite Scrolling
+    // // Step 5: Prepare for Infinite Scrolling
     this.carouselChildren = [...this.carousel.children];
-    // Step 6: Insert Copies of First Few Cards for Infinite Scrolling
+    // // Step 6: Insert Copies of First Few Cards for Infinite Scrolling
     this.carouselChildren.slice(0, this.cardPerView).forEach((card) => {
       this.carousel.insertAdjacentHTML("beforeend", card.outerHTML);
     });
-    // Step 7: Insert Reverse Copies of Last Few Cards for Infinite Scrolling
+    // // Step 7: Insert Reverse Copies of Last Few Cards for Infinite Scrolling
     this.carouselChildren
       .slice(-this.cardPerView)
       .reverse()
@@ -180,10 +180,20 @@ class Slider {
    * @description this function apply when the mouse is up to stop the dragging
    */
   dragStop = () => {
+    let scrollLeftTemp = this.carousel.scrollLeft;
     // Step 1: Set Dragging Flag to false and Apply CSS Class
     this.isDragging = false;
     // - Remove the "dragging" CSS class to the carousel element to visually indicate the stop dragging state.
     this.carousel.classList.remove("dragging");
+    console.log(" this.carousel.scrollLeft ", this.carousel.scrollLeft);
+    console.log(" this.carouselChildren.length ", this.carouselChildren.length);
+    console.log(" this.currentSlide ", this.currentSlide);
+    console.log(" scrollLeftTemp ", scrollLeftTemp);
+    console.log(
+      this.carousel.scrollLeft -
+        (this.carouselChildren.length - this.currentSlide) *
+          this.carousel.offsetWidth
+    );
   };
 
   /**
@@ -198,12 +208,10 @@ class Slider {
       this.carousel.classList.add("no-transition");
       //   - Set the scrollLeft property of the carousel to scroll to the end of the carousel.
       this.carousel.scrollLeft =
-        this.carousel.scrollWidth -
-        this.carouselChildren.length * this.carousel.offsetWidth;
+        this.carousel.scrollWidth - 2 * this.carousel.offsetWidth;
       // - Remove the "no-transition" CSS class to re-enable transition effects.
       this.carousel.classList.remove("no-transition");
       // - Increment the currentSlide index by 1, indicating that the visible slide has shifted to the next slide.
-      this.currentSlide += 1;
     }
     // Step 2: Check if Carousel is at the End
     // - Check if the scrollLeft property of the carousel, rounded to the nearest whole number using Math.ceil(),is equal to the difference between the scrollWidth and the offsetWidth of the carousel.
@@ -218,14 +226,13 @@ class Slider {
       this.carousel.scrollLeft = this.carousel.offsetWidth;
       //   - Remove the "no-transition" CSS class to re-enable transition effects.
       this.carousel.classList.remove("no-transition");
-      this.currentSlide = 0;
     }
 
     // Step 3: Clear Existing Timeout and Start Autoplay
     clearTimeout(this.timeoutId);
     // - If the container is not being hovered over, call the autoPlay() method to start autoplay.
     //   This allows the carousel to automatically scroll to the next slide when not being interacted with.
-    if (!this.container.matches(":hover")) this.autoPlay();
+    //! if (!this.container.matches(":hover")) this.autoPlay();
   };
 
   /**
@@ -247,78 +254,34 @@ class Slider {
   };
 
   slideNavigation = (index) => {
-    // The slideNavigation method is called when a pagination dot is clicked to navigate to a specific slide.
-
-    // Step 1: Determine Slide Direction
-    // - Compare the index of the clicked dot with the currentSlide index to determine the slide direction.
-    // - If the index is greater than the currentSlide index, call the slideRight method to navigate to the right.
-    // - If the index is less than the currentSlide index, call the slideLeft method to navigate to the left.
-    if (index > this.currentSlide) {
-      this.slideRight(index);
-    } else if (index < this.currentSlide) {
-      this.slideLeft(index);
-    }
-  };
-  slideRight = (index) => {
     // The slideRight method is called to navigate the carousel to the right.
 
-    // Step 1: Update Current Slide Index
+    // Step 1: Calculate Scroll Position
+    // - Calculate the new scroll position (temp) by subtracting the product of the index and the offsetWidth of the carousel from the scrollWidth of the carousel.
+    // - The new scroll position represents the position to which the carousel should be scrolled to show the slide at the given index.
+    // let temp =
+    //   this.carousel.scrollWidth -
+    //   (index - this.currentSlide) * this.carousel.offsetWidth;
+    let temp =
+      this.carousel.scrollWidth -
+      (this.carouselChildren.length - index) * this.carousel.offsetWidth;
+
+    // Step 2: Update Current Slide Index
     // - Increment the currentSlide index by the value of the index parameter.
     // - This ensures that the currentSlide index reflects the updated slide after navigation.
-    this.currentSlide = this.currentSlide + index;
-
-    // Step 2: Calculate Scroll Position
-    // - Calculate the new scroll position (temp) by subtracting the product of the index and the offsetWidth of the carousel from the scrollWidth of the carousel.
-    // - The new scroll position represents the position to which the carousel should be scrolled to show the slide at the given index.
-    let temp = this.carousel.scrollWidth - index * this.carousel.offsetWidth;
+    this.currentSlide = index;
 
     // Step 3: Scroll to the New Position
     // - Check if the new scroll position (temp) is within valid bounds.
     // - If it is within bounds, update the scrollLeft property of the carousel to scroll to the new position (temp).
     // - Remove the "active" class from the currently active pagination dot.
     // - Add the "active" class to the pagination dot corresponding to the updated index.
-    if (
-      temp >= 0 &&
-      temp <= this.carousel.scrollWidth - this.carousel.offsetWidth
-    ) {
-      this.carousel.scrollLeft = temp;
-      this.container.querySelector(".dots .active")?.classList.remove("active");
-      this.container
-        .querySelectorAll(".dots .dot")
-        [index].classList.add("active");
-    } else {
-      console.error("Invalid scroll ", temp);
-    }
-  };
-  slideLeft = (index) => {
-    // The slideLeft method is called to navigate the carousel to the left.
 
-    // Step 1: Update Current Slide Index
-    // - Decrement the currentSlide index by the value of the index parameter.
-    // - This ensures that the currentSlide index reflects the updated slide after navigation.
-    this.currentSlide = this.currentSlide - index;
-
-    // Step 2: Calculate Scroll Position
-    // - Calculate the new scroll position (temp) by subtracting the product of the index and the offsetWidth of the carousel from the scrollWidth of the carousel.
-    // - The new scroll position represents the position to which the carousel should be scrolled to show the slide at the given index.
-    let temp = this.carousel.scrollWidth - index * this.carousel.offsetWidth;
-    // Step 3: Scroll to the New Position
-    // - Check if the new scroll position (temp) is within valid bounds.
-    // - If it is within bounds, update the scrollLeft property of the carousel to scroll to the new position (temp).
-    // - Remove the "active" class from the currently active pagination dot.
-    // - Add the "active" class to the pagination dot corresponding to the updated index.
-    if (
-      temp >= 0 &&
-      temp <= this.carousel.scrollWidth - this.carousel.offsetWidth
-    ) {
-      this.carousel.scrollLeft = temp;
-      this.container.querySelector(".dots .active")?.classList.remove("active");
-      this.container
-        .querySelectorAll(".dots .dot")
-        [index].classList.add("active");
-    } else {
-      console.error("Invalid scroll ", temp);
-    }
+    this.carousel.scrollLeft = temp;
+    this.container.querySelector(".dots .active")?.classList.remove("active");
+    this.container
+      .querySelectorAll(".dots .dot")
+      [index].classList.add("active");
   };
 }
 
