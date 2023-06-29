@@ -42,7 +42,7 @@ class Slider {
     this.carousel.addEventListener("mousedown", this.dragStart);
     this.carousel.addEventListener("mousemove", this.dragging);
     this.carousel.addEventListener("mouseup", this.dragStop);
-    this.carousel.addEventListener("scroll", this.InfinityScroll);
+    // this.carousel.addEventListener("scroll", this.InfinityScroll);
 
     // It clears thetimeoutId, which cancels the automatic scrolling.
     this.container.addEventListener("mouseenter", () =>
@@ -115,11 +115,24 @@ class Slider {
       btn.addEventListener("click", () => {
         // - Determine the scroll direction based on the button's id ("left" or "right").
         // - Adjust the carousel scrollLeft property to scroll the carousel in the corresponding direction.
-        this.carousel.scrollLeft +=
-          btn.id === "left" ? -this.firstCardWidth : this.firstCardWidth;
 
-        // - Update the currentSlide index accordingly.
-        this.currentSlide += btn.id === "left" ? -1 : 1;
+        if (
+          this.currentSlide + 2 > this.carouselChildren.length &&
+          btn.id == "right"
+        ) {
+          this.carousel.scrollLeft = 0;
+          // - Update the currentSlide index to the first slide.
+          this.currentSlide = 0;
+        } else if (this.currentSlide - 1 < 0 && btn.id == "left") {
+          this.carousel.scrollLeft = this.carousel.scrollWidth;
+          // - Update the currentSlide index to the last slide.
+          this.currentSlide = this.carouselChildren.length - 1;
+        } else {
+          this.carousel.scrollLeft +=
+            btn.id === "left" ? -this.firstCardWidth : this.firstCardWidth;
+          // - Update the currentSlide index accordingly.
+          this.currentSlide += btn.id === "left" ? -1 : 1;
+        }
 
         // - Remove the "active" class from the currently active pagination dot.
         this.container
@@ -132,20 +145,6 @@ class Slider {
             [this.currentSlide]?.classList.add("active");
       });
     });
-
-    // // Step 5: Prepare for Infinite Scrolling
-    this.carouselChildren = [...this.carousel.children];
-    // // Step 6: Insert Copies of First Few Cards for Infinite Scrolling
-    this.carouselChildren.slice(0, this.cardPerView).forEach((card) => {
-      this.carousel.insertAdjacentHTML("beforeend", card.outerHTML);
-    });
-    // // Step 7: Insert Reverse Copies of Last Few Cards for Infinite Scrolling
-    this.carouselChildren
-      .slice(-this.cardPerView)
-      .reverse()
-      .forEach((card) => {
-        this.carousel.insertAdjacentHTML("afterbegin", card.outerHTML);
-      });
   }
   /**
    * @function dragStart
@@ -173,48 +172,57 @@ class Slider {
     // - Check if the isDragging flag is true, indicating that the user is currently dragging the carousel.
     if (!this.isDragging) return;
 
-    const currentX = e.pageX;
-    const deltaX = currentX - this.startX;
+    const deltaX = e.pageX - this.startX;
 
     if (deltaX > 0) {
       // User is dragging to the right
-      console.log("Dragging right");
       this.draggingDirection = true;
     } else if (deltaX < 0) {
       // User is dragging to the left
-      console.log("Dragging left");
       this.draggingDirection = false;
     }
     // - Calculate the new scrollLeft value of the carousel based on the initial scroll position (startScrollLeft),
     //  the current horizontal position of the mouse pointer (e.pageX), and the initial mouse position (startX).
-    this.carousel.scrollLeft = this.startScrollLeft - deltaX;
+    if (
+      this.startScrollLeft - deltaX > this.carousel.scrollWidth ||
+      this.startScrollLeft - deltaX < 0
+    ) {
+      this.isDragging = false;
+    } else this.carousel.scrollLeft = this.startScrollLeft - deltaX;
   };
   /**
    * @function dragStop
    * @description this function apply when the mouse is up to stop the dragging
    */
-  dragStop = (e) => {
-    let scrollLeftTemp = this.carousel.scrollLeft;
+  dragStop = () => {
+    console.log(" this.currentSlide ", this.currentSlide);
     // Step 1: Set Dragging Flag to false and Apply CSS Class
     this.isDragging = false;
     // - Remove the "dragging" CSS class to the carousel element to visually indicate the stop dragging state.
-    this.draggingDirection
-      ? (this.currentSlide -= 1)
-      : (this.currentSlide += 1);
+
+    if (this.currentSlide - 1 < 0 && this.draggingDirection) {
+      this.slideNavigation(4);
+      this.currentSlide = 4;
+    } else if (
+      this.currentSlide + 2 > this.carouselChildren.length &&
+      !this.draggingDirection
+    ) {
+      this.slideNavigation(0);
+      this.currentSlide = 0;
+      // this.currentSlide = this.carouselChildren.length - 1;
+    } else {
+      this.draggingDirection
+        ? (this.currentSlide -= 1)
+        : (this.currentSlide += 1);
+    }
+
     this.container.querySelector(".dots .active")?.classList.remove("active");
     this.container
       .querySelectorAll(".dots .dot")
-      [this.currentSlide].classList.add("active");
+      [this.currentSlide]?.classList.add("active");
     this.carousel.classList.remove("dragging");
-    console.log(" this.carousel.scrollLeft ", this.carousel.scrollLeft);
-    console.log(" this.carouselChildren.length ", this.carouselChildren.length);
+
     console.log(" this.currentSlide ", this.currentSlide);
-    console.log(" scrollLeftTemp ", scrollLeftTemp);
-    console.log(
-      this.carousel.scrollLeft -
-        (this.carouselChildren.length - this.currentSlide) *
-          this.carousel.offsetWidth
-    );
   };
 
   /**
@@ -331,7 +339,7 @@ class Slide {
         <p class="name">${this.name}</p>
         <p class="job-title">${this.title}</p>
     </div>
-    <button class="cv-button">View CV Sample</button>
+    <button class="cv-button" disabled>View CV Sample</button>
     ${this.index}
     `;
   }
