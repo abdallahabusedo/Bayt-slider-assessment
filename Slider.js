@@ -53,6 +53,7 @@ class Slider {
     //! this.container.addEventListener("mouseleave", this.autoPlay);
     // this.autoPlay();
 
+    this.draggingDirection;
     this.dots;
     this.currentSlide = 0;
     this.currentDot = 0;
@@ -171,19 +172,39 @@ class Slider {
   dragging = (e) => {
     // - Check if the isDragging flag is true, indicating that the user is currently dragging the carousel.
     if (!this.isDragging) return;
+
+    const currentX = e.pageX;
+    const deltaX = currentX - this.startX;
+
+    if (deltaX > 0) {
+      // User is dragging to the right
+      console.log("Dragging right");
+      this.draggingDirection = true;
+    } else if (deltaX < 0) {
+      // User is dragging to the left
+      console.log("Dragging left");
+      this.draggingDirection = false;
+    }
     // - Calculate the new scrollLeft value of the carousel based on the initial scroll position (startScrollLeft),
     //  the current horizontal position of the mouse pointer (e.pageX), and the initial mouse position (startX).
-    this.carousel.scrollLeft = this.startScrollLeft - (e.pageX - this.startX);
+    this.carousel.scrollLeft = this.startScrollLeft - deltaX;
   };
   /**
    * @function dragStop
    * @description this function apply when the mouse is up to stop the dragging
    */
-  dragStop = () => {
+  dragStop = (e) => {
     let scrollLeftTemp = this.carousel.scrollLeft;
     // Step 1: Set Dragging Flag to false and Apply CSS Class
     this.isDragging = false;
     // - Remove the "dragging" CSS class to the carousel element to visually indicate the stop dragging state.
+    this.draggingDirection
+      ? (this.currentSlide -= 1)
+      : (this.currentSlide += 1);
+    this.container.querySelector(".dots .active")?.classList.remove("active");
+    this.container
+      .querySelectorAll(".dots .dot")
+      [this.currentSlide].classList.add("active");
     this.carousel.classList.remove("dragging");
     console.log(" this.carousel.scrollLeft ", this.carousel.scrollLeft);
     console.log(" this.carouselChildren.length ", this.carouselChildren.length);
