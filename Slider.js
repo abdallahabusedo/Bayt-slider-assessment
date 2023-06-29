@@ -23,27 +23,31 @@ class Slider {
       clearTimeout(this.timeoutId)
     );
     // Auto play
-    this.container.addEventListener("mouseleave", this.autoPlay);
-    this.autoPlay();
+    // this.container.addEventListener("mouseleave", this.autoPlay);
+    // this.autoPlay();
     this.dots;
     this.currentSlide = 0;
     this.currentDot = 0;
-    console.log(this.currentSlide);
   }
   init() {
     let slideList = this.container.querySelectorAll(".slide");
     this.dots = [];
     const dotsContainer = this.container.querySelector(".dots");
-    slideList.forEach((slide) => {
-      slide.innerHTML = new Slide(slide).init();
-      let dot = document.createElement("div");
-      dot.classList.add("dot");
-      this.dots.push(dot);
-      dotsContainer.appendChild(dot);
+    slideList.forEach((slide, index) => {
+      slide.innerHTML = new Slide(slide, index).init();
+      if (dotsContainer) {
+        let dot = document.createElement("div");
+        dot.classList.add("dot");
+        this.dots.push(dot);
+        dotsContainer.appendChild(dot);
+      }
     });
-    this.dots.forEach((dot, index) => {
-      dot.addEventListener("click", () => this.slideNavigation(index));
-    });
+    dotsContainer &&
+      this.container.querySelectorAll(".dots .dot")[0].classList.add("active");
+    dotsContainer &&
+      this.dots.forEach((dot, index) => {
+        dot.addEventListener("click", () => this.slideNavigation(index));
+      });
 
     /**
      * Handle arrows clicking
@@ -53,21 +57,27 @@ class Slider {
         this.carousel.scrollLeft +=
           btn.id === "left" ? -this.firstCardWidth : this.firstCardWidth;
         this.currentSlide += btn.id === "left" ? -1 : 1;
-        console.log(this.currentSlide);
+        this.container
+          .querySelector(".dots .active")
+          ?.classList.remove("active");
+        dotsContainer &&
+          this.container
+            .querySelectorAll(".dots .dot")
+            [this.currentSlide].classList.add("active");
       });
     });
 
-    // this.carouselChildren = [...this.carousel.children];
+    this.carouselChildren = [...this.carousel.children];
     // insert copies of the first few cards to the end of carousel for infinite scrolling
-    // this.carouselChildren.slice(0, this.cardPerView).forEach((card) => {
-    //   this.carousel.insertAdjacentHTML("beforeend", card.outerHTML);
-    // });
-    // this.carouselChildren
-    //   .slice(-this.cardPerView)
-    //   .reverse()
-    //   .forEach((card) => {
-    //     this.carousel.insertAdjacentHTML("afterbegin", card.outerHTML);
-    //   });
+    this.carouselChildren.slice(0, this.cardPerView).forEach((card) => {
+      this.carousel.insertAdjacentHTML("beforeend", card.outerHTML);
+    });
+    this.carouselChildren
+      .slice(-this.cardPerView)
+      .reverse()
+      .forEach((card) => {
+        this.carousel.insertAdjacentHTML("afterbegin", card.outerHTML);
+      });
   }
   /**
    * @function dragStart
@@ -117,13 +127,13 @@ class Slider {
       this.carousel.classList.add("no-transition");
       this.carousel.scrollLeft = this.carousel.offsetWidth;
       this.carousel.classList.remove("no-transition");
-      this.currentSlide += 1;
-      console.log(this.currentSlide);
+      this.currentSlide += 0;
+      //   console.log(this.currentSlide);
     }
 
     // Clear existing timeout and start autoplay if ouse is not hovering over carousel
     clearTimeout(this.timeoutId);
-    if (!this.container.matches(":hover")) this.autoPlay();
+    // if (!this.container.matches(":hover")) this.autoPlay();
   };
   autoPlay = () => {
     this.timeoutId = setTimeout(
@@ -132,20 +142,55 @@ class Slider {
     );
   };
   slideNavigation = (index) => {
-    index < 0
-      ? (this.currentDot = this.carouselChildren.length - 1)
-      : index >= this.carouselChildren.length
-      ? (this.currentDot = 0)
-      : (this.currentDot = index);
+    console.log("clicked ", index);
+
+    if (index > this.currentSlide) {
+      this.slideRight(index);
+    } else if (index < this.currentSlide) {
+      this.slideLeft(index);
+    }
+  };
+  slideRight = (index) => {
+    this.currentSlide = this.currentSlide + index;
+    let temp = this.carousel.scrollWidth - index * this.carousel.offsetWidth;
+    if (
+      temp >= 0 &&
+      temp <= this.carousel.scrollWidth - this.carousel.offsetWidth
+    ) {
+      this.carousel.scrollLeft = temp;
+      this.container.querySelector(".dots .active")?.classList.remove("active");
+      this.container
+        .querySelectorAll(".dots .dot")
+        [index].classList.add("active");
+    } else {
+      console.error("Invalid scroll ", temp);
+    }
+  };
+  slideLeft = (index) => {
+    this.currentSlide = this.currentSlide - index;
+    let temp = this.carousel.scrollWidth - index * this.carousel.offsetWidth;
+    if (
+      temp >= 0 &&
+      temp <= this.carousel.scrollWidth - this.carousel.offsetWidth
+    ) {
+      this.carousel.scrollLeft = temp;
+      this.container.querySelector(".dots .active")?.classList.remove("active");
+      this.container
+        .querySelectorAll(".dots .dot")
+        [index].classList.add("active");
+    } else {
+      console.error("Invalid scroll ", temp);
+    }
   };
 }
 
 class Slide {
-  constructor(element) {
+  constructor(element, index) {
     this.description = element.dataset.description;
     this.imageurl = element.dataset.imageurl;
     this.name = element.dataset.name;
     this.title = element.dataset.title;
+    this.index = index;
     this.init();
   }
   init() {
@@ -157,6 +202,7 @@ class Slide {
         <p class="job-title">${this.title}</p>
     </div>
     <button class="cv-button">View CV Sample</button>
+    ${this.index}
     `;
   }
 }

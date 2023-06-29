@@ -10,8 +10,8 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-
   height: 100vh;
+  width: 100%;
   background: #fff;
   position: relative;
   overflow: hidden;
@@ -20,6 +20,8 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  max-width: 1000px;
+  width: 100%;
 }
 .testimonial {
   position: relative;
@@ -145,12 +147,25 @@
   transition: background-color 0.3s ease;
 }
 
-@media screen and (max-width: 760px) {
-  .container .icons {
-    display: hidden;
+@media only screen and (max-width: 1000px) {
+  .slider-container {
+    max-width: 700px;
   }
-  .testimonial {
-    max-width: 760px;
-    min-width: none;
+  .testimonial .slide {
+    min-width: 700px !important;
+  }
+}
+
+@media only screen and (max-width: 768px) {
+  .slider-container {
+    max-width: 500px;
+    background: #d8d8d828;
+    border-radius: 50px;
+  }
+  .testimonial .slide {
+    min-width: 500px !important;
+  }
+  .container .icons {
+    display: none;
   }
 }
