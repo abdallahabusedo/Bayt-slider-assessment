@@ -232,8 +232,7 @@ class Slider {
       this.currentSlide = this.carouselChildren.length - 1;
       // - Remove the "no-transition" CSS class to re-enable transition effects.
       this.carousel.classList.remove("no-transition");
-      clearTimeout(this.timeoutId);
-      this.timeoutId = setTimeout(() => {
+      setTimeout(() => {
         this.carousel.classList.add("no-transition");
         this.slideNavigation(0);
         this.currentSlide = 0;
