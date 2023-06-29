@@ -42,15 +42,15 @@ class Slider {
     this.carousel.addEventListener("mousedown", this.dragStart);
     this.carousel.addEventListener("mousemove", this.dragging);
     this.carousel.addEventListener("mouseup", this.dragStop);
-    // this.carousel.addEventListener("scroll", this.InfinityScroll);
+    this.carousel.addEventListener("scroll", this.InfinityScroll);
 
-    // It clears thetimeoutId, which cancels the automatic scrolling.
+    // It clears the timeoutId, which cancels the automatic scrolling.
     this.container.addEventListener("mouseenter", () =>
       clearTimeout(this.timeoutId)
     );
 
     // Auto play
-    //! this.container.addEventListener("mouseleave", this.autoPlay);
+    this.container.addEventListener("mouseleave", () => this.autoPlay());
     // this.autoPlay();
 
     this.draggingDirection;
@@ -64,9 +64,8 @@ class Slider {
    * @description The init() method is responsible for initializing the carousel by performing several tasks.
    */
   init() {
+    this.autoPlay();
     // Step 1: Slide Initialization and Pagination Dots Creation
-    //! *** Note pagination dot creation is the only feature that dose not work correctly ***///
-
     // - Query all slide elements within the container using the class selector ".slide".
     let slideList = this.container.querySelectorAll(".slide");
 
@@ -173,7 +172,6 @@ class Slider {
     if (!this.isDragging) return;
 
     const deltaX = e.pageX - this.startX;
-
     if (deltaX > 0) {
       // User is dragging to the right
       this.draggingDirection = true;
@@ -195,11 +193,9 @@ class Slider {
    * @description this function apply when the mouse is up to stop the dragging
    */
   dragStop = () => {
-    console.log(" this.currentSlide ", this.currentSlide);
     // Step 1: Set Dragging Flag to false and Apply CSS Class
     this.isDragging = false;
     // - Remove the "dragging" CSS class to the carousel element to visually indicate the stop dragging state.
-
     if (this.currentSlide - 1 < 0 && this.draggingDirection) {
       this.slideNavigation(4);
       this.currentSlide = 4;
@@ -209,7 +205,6 @@ class Slider {
     ) {
       this.slideNavigation(0);
       this.currentSlide = 0;
-      // this.currentSlide = this.carouselChildren.length - 1;
     } else {
       this.draggingDirection
         ? (this.currentSlide -= 1)
@@ -221,8 +216,6 @@ class Slider {
       .querySelectorAll(".dots .dot")
       [this.currentSlide]?.classList.add("active");
     this.carousel.classList.remove("dragging");
-
-    console.log(" this.currentSlide ", this.currentSlide);
   };
 
   /**
@@ -230,30 +223,34 @@ class Slider {
    * @descriptionThe InfinityScroll method is responsible for handling the infinite scrolling behavior of the carousel.
    */
   InfinityScroll = () => {
-    // Step 1: Check if Carousel is at the Beginning
-    // - Check if the scrollLeft property of the carousel is at its leftmost position (0).
-    if (this.carousel.scrollLeft === 0) {
+    // Step 1: Check if Carousel is at the End
+    if (this.currentSlide + 2 > this.carouselChildren.length) {
       //  - Add the "no-transition" CSS class to the carousel to temporarily disable any transition effects.
       this.carousel.classList.add("no-transition");
       //   - Set the scrollLeft property of the carousel to scroll to the end of the carousel.
-      this.carousel.scrollLeft =
-        this.carousel.scrollWidth - 2 * this.carousel.offsetWidth;
+      this.slideNavigation(this.carouselChildren.length - 1);
+      this.currentSlide = this.carouselChildren.length - 1;
       // - Remove the "no-transition" CSS class to re-enable transition effects.
       this.carousel.classList.remove("no-transition");
-      // - Increment the currentSlide index by 1, indicating that the visible slide has shifted to the next slide.
+      clearTimeout(this.timeoutId);
+      this.timeoutId = setTimeout(() => {
+        this.carousel.classList.add("no-transition");
+        this.slideNavigation(0);
+        this.currentSlide = 0;
+        this.carousel.classList.remove("no-transition");
+      }, this.duration);
     }
-    // Step 2: Check if Carousel is at the End
+    // - Increment the currentSlide index by 1, indicating that the visible slide has shifted to the next slide.
+    // Step 2: Check if Carousel is at the start
     // - Check if the scrollLeft property of the carousel, rounded to the nearest whole number using Math.ceil(),is equal to the difference between the scrollWidth and the offsetWidth of the carousel.
-    else if (
-      Math.ceil(this.carousel.scrollLeft) ===
-      this.carousel.scrollWidth - this.carousel.offsetWidth
-    ) {
+    else if (this.currentSlide - 1 < 0) {
       // - Add the "no-transition" CSS class to the carousel to temporarily disable any transition effects.
       this.carousel.classList.add("no-transition");
       // - Set the scrollLeft property of the carousel to scroll to the beginning of the carousel,
       // which is equal to the offsetWidth of the carousel.
-      this.carousel.scrollLeft = this.carousel.offsetWidth;
-      //   - Remove the "no-transition" CSS class to re-enable transition effects.
+      this.slideNavigation(0);
+      this.currentSlide = 0;
+      // - Remove the "no-transition" CSS class to re-enable transition effects.
       this.carousel.classList.remove("no-transition");
     }
 
@@ -261,7 +258,7 @@ class Slider {
     clearTimeout(this.timeoutId);
     // - If the container is not being hovered over, call the autoPlay() method to start autoplay.
     //   This allows the carousel to automatically scroll to the next slide when not being interacted with.
-    //! if (!this.container.matches(":hover")) this.autoPlay();
+    if (!this.carousel.matches(":hover")) this.autoPlay();
   };
 
   /**
@@ -276,21 +273,27 @@ class Slider {
     //     The scrollLeft value is incremented by the width of the first card (this.firstCardWidth).
     //     This causes the carousel to scroll horizontally to the next slide.
     // - The duration for the setTimeout is specified by the this.duration property, which represents the transition duration for the carousel.
-    this.timeoutId = setTimeout(
-      () => (this.carousel.scrollLeft += this.firstCardWidth),
-      this.duration
-    );
+    this.timeoutId = setTimeout(() => {
+      this.carousel.scrollLeft += this.firstCardWidth;
+
+      // update the current slide index
+      this.currentSlide += 1;
+      this.container.querySelector(".dots .active")?.classList.remove("active");
+      this.container
+        .querySelectorAll(".dots .dot")
+        [this.currentSlide]?.classList.add("active");
+    }, this.duration);
+    // this.timeoutId = setTimeout(
+    //   () => (this.carousel.scrollLeft += this.firstCardWidth),
+    //   this.duration
+    // );
   };
 
   slideNavigation = (index) => {
     // The slideRight method is called to navigate the carousel to the right.
 
     // Step 1: Calculate Scroll Position
-    // - Calculate the new scroll position (temp) by subtracting the product of the index and the offsetWidth of the carousel from the scrollWidth of the carousel.
     // - The new scroll position represents the position to which the carousel should be scrolled to show the slide at the given index.
-    // let temp =
-    //   this.carousel.scrollWidth -
-    //   (index - this.currentSlide) * this.carousel.offsetWidth;
     let temp =
       this.carousel.scrollWidth -
       (this.carouselChildren.length - index) * this.carousel.offsetWidth;
@@ -310,7 +313,7 @@ class Slider {
     this.container.querySelector(".dots .active")?.classList.remove("active");
     this.container
       .querySelectorAll(".dots .dot")
-      [index].classList.add("active");
+      [index]?.classList.add("active");
   };
 }
 
