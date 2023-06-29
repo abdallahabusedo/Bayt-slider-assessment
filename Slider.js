@@ -195,10 +195,12 @@ class Slider {
   dragStop = () => {
     // Step 1: Set Dragging Flag to false and Apply CSS Class
     this.isDragging = false;
-    // - Remove the "dragging" CSS class to the carousel element to visually indicate the stop dragging state.
+    // check where is the dragging should affect the current slides index
+    // if the slide is at the beginning and i am dragging to the left
     if (this.currentSlide - 1 < 0 && this.draggingDirection) {
       this.slideNavigation(4);
       this.currentSlide = 4;
+      // if the slide is at the end and i am dragging to the right
     } else if (
       this.currentSlide + 2 > this.carouselChildren.length &&
       !this.draggingDirection
@@ -206,6 +208,7 @@ class Slider {
       this.slideNavigation(0);
       this.currentSlide = 0;
     } else {
+      // if the slide is at the middle
       this.draggingDirection
         ? (this.currentSlide -= 1)
         : (this.currentSlide += 1);
@@ -265,6 +268,7 @@ class Slider {
    * @description  The autoPlay method is responsible for automatically scrolling the carousel to the next slide at a specified duration.
    */
   autoPlay = () => {
+    if (window.innerWidth < 800) return;
     // Step 1: Set Timeout
     // - Use the setTimeout() function to create a timeout and store the returned ID in the timeoutId variable.
     // - Inside the timeout function:
